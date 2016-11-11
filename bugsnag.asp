@@ -71,106 +71,6 @@ Function GetBugSnagPayload(strLevel, strMessage, strExtraPayload, objError, blnI
         strURL = "http://"
     End If
     strURL = strURL & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL")
-
-    strPayload = "{"
-    strPayload = strPayload & """apiKey"": """&strBugSnagAccessToken&""","
-    strPayload = strPayload & """notifier"": "
-    strPayload = strPayload & "{"
-    strPayload = strPayload & "     ""name"": ""Bugsnag ASP"","
-    strPayload = strPayload & "     ""version"": ""1.0.0"","
-    strPayload = strPayload & "     ""url"": ""https://github.com/hellokoan/bugsnag-classic-asp"""
-    strPayload = strPayload & "},"
-    strPayload = strPayload & """events"": "
-    strPayload = strPayload & "[{"
-    strPayload = strPayload & "     ""payloadVersion"": 2,"
-    strPayload = strPayload & "     ""severity"": """&strLevel&""", "
-    strPayload = strPayload & "     ""exceptions"": "
-    strPayload = strPayload & "     [{"
-    If strLevel = "error" AND IsObject(objError) Then
-    strPayload = strPayload & "         ""errorClass"": """&PrepareForBugSnag(objError.Category)&""","
-    strPayload = strPayload & "         ""message"": """&PrepareForBugSnag(objError.Description)&""","
-    strPayload = strPayload & "         ""stacktrace"": "
-    strPayload = strPayload & "         [{"
-    strPayload = strPayload & "             ""inProject"": true,"
-    strPayload = strPayload & "             ""file"": """&PrepareForBugSnag(objError.File)&""","
-    strPayload = strPayload & "             ""lineNumber"": """&PrepareForBugSnag(objError.Line)&""","
-    strPayload = strPayload & "             ""columnNumber"": """&PrepareForBugSnag(objError.Column)&""""
-    If objError.Source <> "" Then
-    strPayload = strPayload & "             ,""code"": {"""&PrepareForBugSnag(objError.Line)&""": """&PrepareForBugSnag(objError.Source)&"""}"
-    End If
-    strPayload = strPayload & "         }]"
-    Else
-    strPayload = strPayload & "         ""errorClass"": """&PrepareForBugSnag(strMessage)&""","
-    strPayload = strPayload & "         ""stacktrace"": [{}]"
-    End If
-    strPayload = strPayload & "     }]"
-
-    If strBugSnagPersonUserId <> "" OR strBugSnagPersonUserName <> "" Then
-    strPayload = strPayload & "     ,""user"": "
-    strPayload = strPayload & "     {"
-    strPayload = strPayload & "        ""id"": """&PrepareForBugSnag(strBugSnagPersonUserId)&""","
-    strPayload = strPayload & "        ""email"": """&PrepareForBugSnag(strBugSnagPersonUserName)&""""
-    strPayload = strPayload & "     }"
-    End If
-    strPayload = strPayload & "     ,""metaData"": "
-    strPayload = strPayload & "     {"
-    strPayload = strPayload & "         ""method"": """&PrepareForBugSnag(Request.ServerVariables("HTTP_METHOD"))&""","
-    strPayload = strPayload & "         ""url"": """&PrepareForBugSnag(strUrl)&""","
-    strPayload = strPayload & "         ""query_string"": """&PrepareForBugSnag(Request.QueryString)&""","
-    strPayload = strPayload & "         ""form"": """&PrepareForBugSnag(Request.Form)&""","
-    strPayload = strPayload & "         ""ip"": """&PrepareForBugSnag(Request.ServerVariables("REMOTE_ADDR"))&""""
-    If blnIncludeSession Then
-    strPayload = strPayload & "         ,""session"": "&GetSessionAsString()
-    End If
-    If strExtraPayload <> "" Then
-        strPayload = strPayload & ","
-        strPayload = strPayload & strExtraPayload
-    End If
-    strPayload = strPayload & "     }"
-    strPayload = strPayload & "}]"
-    strPayload = strPayload & "}"
-    On Error Goto 0
-
-    GetBugSnagPayload = strPayload
-End Function
-
-Function PrepareForBugSnag(strData)
-    strData = EnsureIsTrimmedString(strData)
-    strData = Replace(strData, """", "")
-    strData = Replace(strData, "\", "\\")
-    strData = Replace(strData, VbCrLf, "\n")
-    PrepareForBugSnag = strData
-End Function
-
-Function EnsureIsTrimmedString(ByVal strString)
-    strString = strString & ""
-    If NOT IsNull(strString) Then
-        strString = Trim(strString)
-    End If
-    EnsureIsTrimmedString = strString 
-End Function
-
-Function GetSessionAsString()
-    On Error Resume Next
-    Dim sessionItem, strSession
-    strSession = "{"
-    For Each sessionItem in Session.Contents
-Function GetBugSnagPayload(strLevel, strMessage, strExtraPayload, objError, blnIncludeSession)
-    Dim strPayload
-
-    On Error Resume Next
-    If strLevel = "error" Then
-        If IsObject(objError) Then
-            strMessage = objError.Description
-        End If
-    End If
-
-    If Request.ServerVariables("HTTPS") = "ON" Then
-        strURL = "https://"
-    Else
-        strURL = "http://"
-    End If
-    strURL = strURL & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL")
     If Request.QueryString <> "" Then
         strURL = strURL & Request.QueryString
     End If
@@ -181,7 +81,7 @@ Function GetBugSnagPayload(strLevel, strMessage, strExtraPayload, objError, blnI
     strPayload = strPayload & "{"
     strPayload = strPayload & "     ""name"": ""Bugsnag ASP"","
     strPayload = strPayload & "     ""version"": ""1.0.0"","
-    strPayload = strPayload & "     ""url"": ""https://github.com/hellokoan/bugsnag-classic-asp"""
+    strPayload = strPayload & "     ""url"": ""https://github.com/hellokoan/bugsnag-classic-asp-notifier"""
     strPayload = strPayload & "},"
     strPayload = strPayload & """events"": "
     strPayload = strPayload & "[{"
@@ -233,7 +133,7 @@ Function GetBugSnagPayload(strLevel, strMessage, strExtraPayload, objError, blnI
     strPayload = strPayload & "}]"
     strPayload = strPayload & "}"
     On Error Goto 0
-    
+
     GetBugSnagPayload = strPayload
 End Function
 
@@ -297,7 +197,7 @@ Function BugSnagPrintArray(aryArray)
 		strDimensions = Left(strDimensions, Len(strDimensions)-1)
 	End If
 	strOut = "Array ("&strDimensions&"): " & VbCrLf
-    strOut = strOut & "----------" & VbCrLf
+	strOut = strOut & "----------" & VbCrLf
 	j=0
 	For Each strElement in aryArray
 		strOut = strOut & strElement
