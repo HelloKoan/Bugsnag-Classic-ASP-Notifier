@@ -37,13 +37,13 @@ Function BugSnag(strLevel, strMessage, strExtraPayload, objError)
 
     On Error Resume Next
     strPayload = GetBugSnagPayload(strLevel, strMessage, strExtraPayload, objError, True)
-    Call GetURLPostJSON("https://notify.bugsnag.com/", 1, strPayload, "", "", intResponseCode)
+    Call PostToBugSnag("https://notify.bugsnag.com/", 1, strPayload, intResponseCode)
     If intResponseCode = 200 Then
         BugSnag = True
     End If
     If NOT BugSnag Then
         strPayload = GetBugSnagPayload(strLevel, strMessage, strExtraPayload, objError, False)
-        Call GetURLPostJSON("https://notify.bugsnag.com/", 1, strPayload, "", "", intResponseCode)
+        Call PostToUrl("https://notify.bugsnag.com/", 1, strPayload, "", "", intResponseCode)
         If intResponseCode = 200 Then
             BugSnag = True
         End If
@@ -211,5 +211,79 @@ Function BugSnagPrintArray(aryArray)
 	Next	
     strOut = strOut & "----------"
 	BugSnagPrintArray = strOut
+End Function
+
+Function PostToUrl(strUrl, lTotal, strData, strUserName, strPassword, intResponseCode)
+    Dim strAuthorizationHeader
+    strAuthorizationHeader = "Basic " & base64_encode(strUserName & ":" & strPassword) & "=="
+    PostToUrl = GetURL(strUrl, lTotal, "POST", strData, "application/json", "", "", strAuthorizationHeader, intResponseCode)
+End Function
+
+Function GetURL(strUrl, lTotal, strMethod, strData, strContentType, strUserName, strPassword, strAuthorizationHeader, intResponseCode)
+    Dim objHttp, GotResponse, intSecondsWait
+    On Error Resume Next
+    GetURL = ""
+        
+    Set objHttp = Server.CreateObject("MSXML2.ServerXMLHTTP")
+    If lTotal = 0 Then
+        objHttp.open strMethod, StripHTML(Replace(strUrl, "&amp;", "&")), True, strUserName, strPassword
+    Else
+        objHttp.setTimeouts lTotal*1000/4, lTotal*1000/4, lTotal*1000/4, lTotal*1000
+        objHttp.open strMethod, StripHTML(Replace(strUrl, "&amp;", "&")), False, strUserName, strPassword
+    End If
+    If strContentType <> "" Then
+        objHttp.setRequestHeader "Content-Type", strContentType
+    End If
+    If strAuthorizationHeader <> "" Then
+        objHttp.setRequestHeader "Authorization", strAuthorizationHeader
+    End If
+    objHttp.send strData
+    If lTotal = 0 Then
+        Set objHttp = Nothing
+        Exit Function
+    End If
+    
+    intSecondsWait  = 0
+    GotResponse     = False
+    Do While objHttp.readyState <> 4
+        If Err.Number <> 0 Then
+            Exit Do
+        End If
+        
+        objHttp.waitForResponse 1
+        intSecondsWait = intSecondsWait + 1
+        
+        If objHttp.readyState = 4 Then
+            GotResponse = True
+            Exit Do
+        End If
+        If intSecondsWait > lTotal Then
+            GotResponse = False
+            Exit Do
+        End If
+    Loop
+    If objHttp.readyState = 4 Then
+        GotResponse = True
+    End If
+    
+    If GotResponse AND Err.Number = 0 Then
+        intResponseCode = objHttp.status
+        If objHttp.status >= 200 AND objHttp.status <= 299 Then
+            If InStr(strURL, ".jpg") > 0 OR InStr(strURL, ".gif") > 0 OR InStr(strURL, ".png") > 0 OR InStr(strURL, ".jpeg") > 0 Then
+                GetURL = objHTTP.ResponseBody
+            Else
+                GetURL = strOutDB(objHTTP.ResponseText)
+            End If
+        Else
+            GotResponse = False
+        End If
+        
+    ElseIf Err.Number <> 0 Then
+        Err.Clear
+    End If
+    
+    Set objHttp = Nothing
+    
+    On Error Goto 0
 End Function
 %>
