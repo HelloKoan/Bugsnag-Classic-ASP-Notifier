@@ -37,7 +37,7 @@ Function BugSnag(strLevel, strMessage, strExtraPayload, objError)
 
     On Error Resume Next
     strPayload = GetBugSnagPayload(strLevel, strMessage, strExtraPayload, objError, True)
-    Call PostToBugSnag("https://notify.bugsnag.com/", 1, strPayload, intResponseCode)
+    Call PostToUrl("https://notify.bugsnag.com/", 1, strPayload, "", "", intResponseCode)
     If intResponseCode = 200 Then
         BugSnag = True
     End If
